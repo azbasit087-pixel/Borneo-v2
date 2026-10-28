@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Borneo Depok - Sistem Penjualan Terpadu</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Menambahkan FontAwesome untuk Ikon Bergaya Bersih (Pengganti Emoji) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --secondary: #1e293b;
+            --bg-color: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #334155;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.02);
+            --form-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        body { 
+            font-family: '-apple-system', 'BlinkMacSystemFont', 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            min-height: 100vh; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+        }
+        
+        /* --- LAYAR LOGIN --- */
+        #login-screen { display: flex; justify-content: center; align-items: center; width: 100%; height: 100vh; background: #e2e8f0; }
+        .login-box { background: var(--surface); padding: 40px; border-radius: 20px; box-shadow: var(--card-shadow); width: 100%; max-width: 380px; text-align: center; }
+        .login-box h1 { margin-top: 0; color: var(--primary); margin-bottom: 10px; font-weight: 800; font-size: 28px; }
+        .login-box input { width: 100%; padding: 14px; margin-bottom: 15px; border: 2px solid var(--border); border-radius: 12px; box-sizing: border-box; font-size: 14px; transition: 0.2s; }
+        .login-box input:focus { border-color: var(--primary); outline: none; }
+        .login-box button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        .login-box button:hover { background: var(--primary-hover); transform: translateY(-2px); }
+        .error-msg { color: var(--danger); font-size: 13px; margin-bottom: 15px; display: none; background: #fee2e2; padding: 10px; border-radius: 8px; }
+
+        /* --- APLIKASI UTAMA --- */
+        #app-screen { display: none; width: 100%; display: flex; } 
+        
+        /* SIDEBAR (NAVIGASI TERANG & BERSIH) */
+        .sidebar { 
+            width: 260px; 
+            background: var(--surface); 
+            border-right: 1px solid var(--border);
+            padding: 30px 20px; 
+            box-sizing: border-box; 
+            display: flex; 
+            flex-direction: column; 
+            z-index: 10; 
+            height: 100vh; 
+            position: sticky;
+            top: 0;
+        }
+        .sidebar h1 { 
+            text-align: center; 
+            font-size: 24px; 
+            margin-top: 0; 
+            margin-bottom: 40px; 
+            color: var(--primary);
+            font-weight: 800; 
+            letter-spacing: 0.5px; 
+        }
+        
+        .nav-menu { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+        .nav-item {
+            padding: 14px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 15px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        /* Styling Ikon Navigasi */
+        .nav-item i {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+            color: #94a3b8;
+            transition: 0.2s;
+        }
+
+        .nav-item:hover { background: #f1f5f9; color: var(--primary); }
+        .nav-item:hover i { color: var(--primary); }
+        
+        .nav-item.active { background: #eef2ff; color: var(--primary); }
+        .nav-item.active i { color: var(--primary); }
+
+        .btn-logout { 
+            background: #fff1f2; 
+            color: var(--danger); 
+            border: 1px solid #fecdd3; 
+            padding: 12px; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-size: 14px; 
+            font-weight: bold; 
+            transition: 0.3s; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-logout:hover { background: var(--danger); color: white; }
+
+        /* MAIN CONTENT */
+        .main-content { flex: 1; padding: 40px 50px; box-sizing: border-box; height: 100vh; overflow-y: auto; }
+        .main-content h2 { 
+            color: var(--secondary); 
+            margin-top: 0; 
+            margin-bottom: 25px; 
+            font-weight: 800; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        
+        /* DASHBOARD CARDS */
+        .dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 35px; }
+        .card { 
+            background: var(--surface); 
+            padding: 24px 20px; 
+            border-radius: 20px; 
+            box-shadow: var(--card-shadow); 
+            text-align: left; 
+            border: 1px solid var(--border);
+            transition: all 0.3s ease; 
+            position: relative; 
+            overflow: hidden; 
+        }
+        .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px; }
+        .card-harian::before { background: #3b82f6; }
+        .card-barang::before { background: #f59e0b; }
+        .card-bulanan::before { background: #8b5cf6; }
+        .card-tren::before { background: #10b981; }
+        
+        .card i { position: absolute; top: 20px; right: 20px; font-size: 24px; color: #e2e8f0; transition: 0.3s; }
+        
+        .card.clickable { cursor: pointer; }
+        .card.clickable:hover { transform: translateY(-5px); box-shadow: 0 12px 20px -5px rgba(0, 0, 0, 0.1); }
+        .card.clickable:hover i { color: #cbd5e1; transform: scale(1.1); }
+        
+        .card h3 { margin: 0 0 10px 0; font-size: 13px; color: var(--text-light); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+        .card p { margin: 0; font-size: 28px; font-weight: 800; color: var(--secondary); letter-spacing: -0.5px; }
+        
+        /* --- TABEL WARNA PASTEL --- */
+        .table-container { 
+            background: var(--surface); 
+            border-radius: 20px; 
+            box-shadow: var(--card-shadow); 
+            overflow-x: auto; 
+            margin-bottom: 30px; 
+            border: 1px solid var(--border); 
+            max-height: 520px; 
+            overflow-y: auto; 
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
+        
+        th { 
+            background: linear-gradient(135deg, #d1fae5 0%, #dbeafe 50%, #f3e8ff 100%); 
+            color: #1e293b; 
+            font-weight: 800; 
+            position: sticky; 
+            top: 0; 
+            z-index: 2; 
+            text-transform: uppercase; 
+            font-size: 13px; 
+            letter-spacing: 0.5px; 
+            padding: 16px 20px;
+            border-bottom: 2px solid #cbd5e1;
+        }
+
+        td { padding: 15px 20px; border-bottom: 1px solid #f1f5f9; transition: 0.2s; }
+        
+        .row-color-0 { background-color: #ffffff; }
+        .row-color-1 { background-color: #f8fafc; } 
+        .row-color-2 { background-color: #f0fdf4; } 
+        .row-color-3 { background-color: #eff6ff; } 
+        .row-color-4 { background-color: #fffbeb; } 
+
+        tr:hover td { background-color: #e2e8f0 !important; }
+
+        /* BADGES */
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+        .badge-qty { background-color: #e0f2fe; color: #0369a1; }
+        .badge-price { background-color: #dcfce7; color: #15803d; font-weight: 800; }
+        .badge-tag { background-color: #f3e8ff; color: #6b21a8; }
+        
+        /* BUTTONS DALAM TABEL */
+        .action-btns { display: flex; gap: 8px; }
+        .btn-action { padding: 8px 12px; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 700; border: none; transition: 0.2s; color: white; display: flex; align-items: center; gap: 6px;}
+        .btn-edit { background: var(--warning); color: #fff; }
+        .btn-edit:hover { background: #d97706; }
+        .btn-hapus { background: var(--danger); }
+        .btn-hapus:hover { background: #dc2626; }
+        
+        /* --- HALAMAN FORM TERSENDIRI --- */
+        .form-card {
+            background: var(--surface);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: var(--form-shadow);
+            border: 1px solid var(--border);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .form-group-col { display: flex; flex-direction: column; gap: 8px; }
+        .form-full-width { grid-column: span 2; }
+        
+        .form-group-col label { font-size: 14px; color: var(--text-main); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .form-group-col label i { color: #94a3b8; }
+        
+        .form-group-col input { 
+            padding: 14px 16px; 
+            font-size: 15px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 12px; 
+            background-color: #f8fafc; 
+            color: var(--text-main); 
+            transition: 0.2s; 
+        }
+        .form-group-col input:focus { 
+            border-color: var(--primary); 
+            background-color: #fff;
+            outline: none; 
+        }
+        
+        .form-actions { display: flex; gap: 15px; margin-top: 20px; grid-column: span 2; }
+        .btn-submit { flex: 1; padding: 16px; background: var(--success); color: #fff; border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-submit:hover { background: #059669; }
+        .btn-cancel { flex: 1; padding: 16px; background: #e2e8f0; color: var(--text-main); border: none; border-radius: 12px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; display: none; justify-content: center; align-items: center; gap: 8px;}
+        .btn-cancel:hover { background: #cbd5e1; }
+
+        /* LAINNYA */
+        .btn-kembali { background: var(--surface); color: var(--text-main); border: 1px solid var(--border); padding: 12px 20px; border-radius: 12px; cursor: pointer; font-size: 14px; margin-bottom: 25px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; box-shadow: var(--form-shadow); transition: 0.2s; }
+        .btn-kembali:hover { background-color: #f8fafc; transform: translateX(-3px); }
+        .chart-container { background: var(--surface); padding: 25px; border-radius: 20px; box-shadow: var(--card-shadow); margin-bottom: 35px; border: 1px solid var(--border); }
+        
+        /* PENGATURAN TAMPILAN HALAMAN */
+        #halaman-utama, #halaman-form, #halaman-detail-bulanan, #halaman-detail-harian { display: none; animation: fadeIn 0.4s ease; }
+        
+        .filter-group { display: flex; gap: 10px; }
+        .input-filter { padding: 10px 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 14px; color: var(--text-main); cursor: pointer; background: var(--surface); font-weight: 600; outline: none;}
+        .input-filter:focus { border-color: var(--primary); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            #app-screen { flex-direction: column; }
+            .sidebar { width: 100%; height: auto; position: static; padding: 20px; border-bottom: 1px solid var(--border); flex-direction: row; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+            .sidebar h1 { margin-bottom: 0; font-size: 20px; }
+            .nav-menu { flex-direction: row; width: 100%; overflow-x: auto; margin-top: 15px; }
+            .nav-item { padding: 10px 15px; white-space: nowrap; }
+            .main-content { padding: 20px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .form-full-width, .form-actions { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================= LAYAR LOGIN ================= -->
+    <div id="login-screen">
+        <div class="login-box">
+            <h1>Borneo Depok</h1>
+            <p style="color: var(--text-light); font-size:14px; margin-bottom:25px;">Sistem Kasir &amp; Penjualan</p>
+            <div id="login-error" class="error-msg"><i class="fa-solid fa-triangle-exclamation"></i> Email atau password salah.</div>
+            <form id="formLogin">
+                <input type="email" id="email" placeholder="Alamat Email" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button type="submit">Masuk Sistem</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================= APLIKASI UTAMA ================= -->
+    <div id="app-screen">
+        
+        <!-- NAVIGASI KIRI -->
+        <div class="sidebar">
+            <h1>Borneo Depok</h1>
+            <nav class="nav-menu">
+                <button class="nav-item active" id="nav-dasbor" onclick="bukaHalamanUtama()">
+                    <i class="fa-solid fa-chart-pie"></i> Dasbor Penjualan
+                </button>
+                <button class="nav-item" id="nav-form" onclick="bukaHalamanForm()">
+                    <i class="fa-solid fa-pen-to-square"></i> Input Penjualan
+                </button>
+                <button class="nav-item" id="nav-laporan" onclick="bukaHalamanDetailBulanIni()">
+                    <i class="fa-solid fa-chart-line"></i> Laporan & Tren
+                </button>
+            </nav>
+            <button id="btnLogout" class="btn-logout" style="margin-top:20px;">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Keluar Sistem
+            </button>
+        </div>
+
+        <!-- KONTEN UTAMA -->
+        <div class="main-content">
+            
+            <!-- HALAMAN 1: DASBOR UTAMA -->
+            <div id="halaman-utama" style="display: block;">
+                <h2>Ringkasan Hari & Bulan Ini</h2>
+                <div class="dashboard">
+                    <div class="card card-harian clickable" onclick="bukaHalamanDetailHarian()">
+                        <i class="fa-solid fa-calendar-day"></i>
+                        <h3>Pendapatan Hari Ini</h3>
+                        <p id="totalHariIni">Rp 0</p>
+                    </div>
+                    <div class="card card-barang">
+                        <i class="fa-solid fa-box-open"></i>
+                        <h3>Barang Terjual (Bulan)</h3>
+                        <p id="totalBarangBulanIni">0 Unit</p>
+                    </div>
+                    <div class="card card-bulanan clickable" onclick="bukaHalamanDetailBulanIni()">
+                        <i class="fa-solid fa-wallet"></i>
+                        <h3>Pendapatan Bulan Ini</h3>
+                        <p id="totalNominalBulanIni">Rp 0</p>
+                    </div>
+                    <div class="card card-tren clickable" onclick="bukaHalamanTren()">
+                        <i class="fa-solid fa-vault"></i>
+                        <h3>Pendapatan Tahun Ini</h3>
+                        <p id="totalNominalTahunIni">Rp 0</p>
+                    </div>
+                </div>
+                
+                <h2>Riwayat Transaksi Terbaru</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Nama Barang</th>
+                                <th>Harga Satuan</th>
+                                <th>Jumlah</th>
+                                <th>Total Harga</th>
+                                <th>Catatan</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelPenjualan"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- HALAMAN 2: FORM INPUT & EDIT -->
+            <div id="halaman-form">
+                <h2 id="judulFormHalaman">Form Input Penjualan Baru</h2>
+                <div class="form-card">
+                    <form id="formPenjualan" class="form-grid">
+                        <div class="form-group-col form-full-width">
+                            <label for="tanggal"><i class="fa-regular fa-calendar"></i> Tanggal Transaksi</label>
+                            <input type="date" id="tanggal" required>
+                        </div>
+                        
+                        <div class="form-group-col">
+                            <label for="namaBarang"><i class="fa-solid fa-mug-hot"></i> Nama Barang / Menu</label>
+                            <input type="text" id="namaBarang" placeholder="Cth: Kopi Susu Aren" required>
+                        </div>
+                        
+                        <div class="form-group-col">
+                            <label for="nominal"><i class="fa-solid fa-tag"></i> Harga Satuan (Rp)</label>
+                            <input type="number" id="nominal" placeholder="Cth: 25000" required min="0">
+                        </div>
+                        
+                        <div class="form-group-col">
+                            <label for="jumlah"><i class="fa-solid fa-boxes-stacked"></i> Jumlah Terjual (Qty)</label>
+                            <input type="number" id="jumlah" placeholder="Cth: 2" required min="1">
+                        </div>
+                        
+                        <div class="form-group-col">
+                            <label for="keterangan"><i class="fa-regular fa-comment-dots"></i> Varian / Catatan</label>
+                            <input type="text" id="keterangan" placeholder="Cth: Less Sugar, Takeaway" required>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" id="btnSubmitForm" class="btn-submit">
+                                <i class="fa-solid fa-check"></i> Simpan Transaksi
+                            </button>
+                            <button type="button" id="btnBatalEdit" class="btn-cancel" onclick="batalEditMode()">
+                                <i class="fa-solid fa-xmark"></i> Batal Edit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- HALAMAN 3: DETAIL HARIAN -->
+            <div id="halaman-detail-harian">
+                <button class="btn-kembali" onclick="bukaHalamanUtama()"><i class="fa-solid fa-angle-left"></i> Kembali ke Dasbor</button>
+                <h2>Statistik Harian
+                    <div class="filter-group">
+                        <input type="date" id="filterTanggalHarian" class="input-filter" onchange="renderHalamanDetailHarian()">
+                    </div>
+                </h2>
+                <div class="dashboard">
+                    <div class="card card-barang">
+                        <i class="fa-solid fa-box-open"></i>
+                        <h3>Total Barang Terjual</h3>
+                        <p id="harianTotalBarang">0 Unit</p>
+                    </div>
+                    <div class="card card-harian">
+                        <i class="fa-solid fa-sack-dollar"></i>
+                        <h3>Total Pendapatan Harian</h3>
+                        <p id="harianTotalNominal">Rp 0</p>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Nama Barang</th>
+                                <th>Harga Satuan</th>
+                                <th>Jumlah</th>
+                                <th>Total Harga</th>
+                                <th>Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelRekapHarianTertentu"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- HALAMAN 4: DETAIL BULANAN & TREN -->
+            <div id="halaman-detail-bulanan">
+                <button class="btn-kembali" onclick="bukaHalamanUtama()"><i class="fa-solid fa-angle-left"></i> Kembali ke Dasbor</button>
+                <h2>Grafik &amp; Rekap Pendapatan
+                    <div class="filter-group">
+                        <select id="filterTahun" class="input-filter" onchange="renderHalamanDetailBulanan()"></select>
+                        <select id="filterBulan" class="input-filter" onchange="renderHalamanDetailBulanan()">
+                            <option value="all">Semua Bulan (Tren Tahunan)</option>
+                            <option value="01">Januari</option>
+                            <option value="02">Februari</option>
+                            <option value="03">Maret</option>
+                            <option value="04">April</option>
+                            <option value="05">Mei</option>
+                            <option value="06">Juni</option>
+                            <option value="07">Juli</option>
+                            <option value="08">Agustus</option>
+                            <option value="09">September</option>
+                            <option value="10">Oktober</option>
+                            <option value="11">November</option>
+                            <option value="12">Desember</option>
+                        </select>
+                    </div>
+                </h2>
+                
+                <div class="chart-container">
+                    <canvas id="grafikPendapatan" height="90"></canvas>
+                </div>
+                
+                <h3 id="judulTabelRekap" style="color: var(--secondary); margin-bottom: 15px; font-weight:800;">Detail Rekap</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th id="headerPeriode">Periode</th>
+                                <th>Barang Terjual</th>
+                                <th>Pendapatan (Rp)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelRekapBulanan"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, push, update, onValue, remove, off } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCB4fP_qBPNskLzJIJnTbTsCY9vMXacSOo",
+        authDomain: "projeect-cfebb.firebaseapp.com",
+        databaseURL: "https://projeect-cfebb-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "projeect-cfebb",
+        storageBucket: "projeect-cfebb.firebasestorage.app",
+        messagingSenderId: "387721771620",
+        appId: "1:387721771620:web:cd5c7abe8550e7a2aa3d71"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const dbRef = ref(db, 'penjualan'); 
+
+    let dataPenjualan = [];
+    let grafikInstance = null; 
+    let idEditSaatIni = null;
+
+    // ==== AUTENTIKASI ====
+    const loginScreen = document.getElementById('login-screen');
+    const appScreen = document.getElementById('app-screen');
+    const loginError = document.getElementById('login-error');
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            loginScreen.style.display = 'none';
+            appScreen.style.display = 'flex';
+            mulaiAmbilData();
+        } else {
+            loginScreen.style.display = 'flex';
+            appScreen.style.display = 'none';
+            hentikanAmbilData();
+        }
+    });
+
+    document.getElementById('formLogin').addEventListener('submit', (e) => {
+        e.preventDefault();
+        signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value)
+            .then(() => { loginError.style.display = 'none'; })
+            .catch(() => { loginError.style.display = 'block'; });
+    });
+
+    document.getElementById('btnLogout').addEventListener('click', () => {
+        signOut(auth).then(() => { document.getElementById('formLogin').reset(); });
+    });
+
+    // ==== DATABASE ====
+    function mulaiAmbilData() {
+        onValue(dbRef, (snapshot) => {
+            dataPenjualan = [];
+            const data = snapshot.val();
+            if (data) {
+                for (let idKey in data) { dataPenjualan.push({ id: idKey, ...data[idKey] }); }
+            }
+            updateTampilan();
+        });
+    }
+
+    function hentikanAmbilData() { off(dbRef); dataPenjualan = []; }
+
+    // ==== MANAJEMEN MENU & NAVIGASI ====
+    function setActiveNav(id) {
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        if(id) document.getElementById(id).classList.add('active');
+        
+        document.getElementById('halaman-utama').style.display = 'none';
+        document.getElementById('halaman-form').style.display = 'none';
+        document.getElementById('halaman-detail-harian').style.display = 'none';
+        document.getElementById('halaman-detail-bulanan').style.display = 'none';
+    }
+
+    window.bukaHalamanUtama = function() {
+        setActiveNav('nav-dasbor');
+        document.getElementById('halaman-utama').style.display = 'block';
+    }
+
+    window.bukaHalamanForm = function() {
+        setActiveNav('nav-form');
+        document.getElementById('halaman-form').style.display = 'block';
+        if(!idEditSaatIni) {
+            document.getElementById('judulFormHalaman').innerText = "Form Input Penjualan Baru";
+        }
+    }
+
+    window.bukaHalamanDetailBulanIni = function() {
+        setActiveNav('nav-laporan');
+        document.getElementById('halaman-detail-bulanan').style.display = 'block';
+        siapkanFilterTahun();
+        const tgl = new Date();
+        document.getElementById('filterTahun').value = tgl.getFullYear().toString();
+        document.getElementById('filterBulan').value = (tgl.getMonth() + 1).toString().padStart(2, '0');
+        window.renderHalamanDetailBulanan();
+    }
+
+    window.bukaHalamanDetailHarian = function() {
+        setActiveNav('');
+        document.getElementById('halaman-detail-harian').style.display = 'block';
+        if(!document.getElementById('filterTanggalHarian').value) { document.getElementById('filterTanggalHarian').valueAsDate = new Date(); }
+        window.renderHalamanDetailHarian();
+    }
+
+    window.bukaHalamanTren = function() {
+        setActiveNav('nav-laporan');
+        document.getElementById('halaman-detail-bulanan').style.display = 'block';
+        siapkanFilterTahun();
+        document.getElementById('filterTahun').value = new Date().getFullYear().toString();
+        document.getElementById('filterBulan').value = 'all'; 
+        window.renderHalamanDetailBulanan();
+    }
+
+    // ==== TAMBAH / EDIT DATA ====
+    document.getElementById('formPenjualan').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const jumlahTerjual = parseInt(document.getElementById('jumlah').value);
+        const hargaPerBarang = parseFloat(document.getElementById('nominal').value);
+        
+        const item = {
+            tanggal: document.getElementById('tanggal').value,
+            namaBarang: document.getElementById('namaBarang').value,
+            keterangan: document.getElementById('keterangan').value,
+            jumlah: jumlahTerjual,
+            hargaSatuan: hargaPerBarang,
+            nominal: jumlahTerjual * hargaPerBarang,
+            timestamp: Date.now()
+        };
+        
+        if (idEditSaatIni) {
+            update(ref(db, 'penjualan/' + idEditSaatIni), item).then(() => {
+                window.batalEditMode();
+            });
+        } else {
+            push(dbRef, item);
+            const tanggalSaatIni = document.getElementById('tanggal').value;
+            this.reset();
+            document.getElementById('tanggal').value = tanggalSaatIni;
+            window.bukaHalamanUtama();
+        }
+    });
+
+    window.siapkanEditData = function(id) {
+        const item = dataPenjualan.find(d => d.id === id);
+        if (!item) return;
+
+        idEditSaatIni = id;
+        
+        window.bukaHalamanForm();
+        document.getElementById('judulFormHalaman').innerText = "Edit Transaksi Penjualan";
+        
+        document.getElementById('tanggal').value = item.tanggal;
+        document.getElementById('namaBarang').value = item.namaBarang;
+        document.getElementById('nominal').value = item.hargaSatuan || (item.nominal / item.jumlah);
+        document.getElementById('jumlah').value = item.jumlah;
+        document.getElementById('keterangan').value = item.keterangan;
+
+        const btnSubmit = document.getElementById('btnSubmitForm');
+        btnSubmit.innerHTML = "<i class='fa-solid fa-check'></i> Simpan Perubahan";
+        btnSubmit.style.background = "var(--warning)";
+        document.getElementById('btnBatalEdit').style.display = "flex";
+    }
+
+    window.batalEditMode = function() {
+        idEditSaatIni = null;
+        document.getElementById('judulFormHalaman').innerText = "Form Input Penjualan Baru";
+        
+        const btnSubmit = document.getElementById('btnSubmitForm');
+        btnSubmit.innerHTML = "<i class='fa-solid fa-check'></i> Simpan Transaksi";
+        btnSubmit.style.background = "var(--success)";
+        document.getElementById('btnBatalEdit').style.display = "none";
+        
+        const tanggalSaatIni = document.getElementById('tanggal').value;
+        document.getElementById('formPenjualan').reset();
+        document.getElementById('tanggal').value = tanggalSaatIni;
+        
+        window.bukaHalamanUtama();
+    }
+
+    window.hapusData = function(id) {
+        if(confirm("Apakah Anda yakin ingin menghapus data ini?")) { remove(ref(db, 'penjualan/' + id)); }
+    }
+
+    // ==== UPDATE TAMPILAN TABEL & DASHBOARD ====
+    function updateTampilan() {
+        const tbody = document.getElementById('tabelPenjualan');
+        tbody.innerHTML = ''; 
+        
+        const dataUrut = [...dataPenjualan].sort((a, b) => b.timestamp - a.timestamp);
+        
+        dataUrut.forEach((item, index) => {
+            const hargaSatuan = item.hargaSatuan || (item.nominal / item.jumlah);
+            const tr = document.createElement('tr');
+            tr.className = `row-color-${index % 5}`; 
+
+            tr.innerHTML = `
+                <td><strong>${item.tanggal}</strong></td>
+                <td style="font-weight: 600;">${item.namaBarang}</td>
+                <td>Rp ${hargaSatuan.toLocaleString('id-ID')}</td>
+                <td><span class="badge badge-qty">${item.jumlah} Unit</span></td>
+                <td><span class="badge badge-price">Rp ${item.nominal.toLocaleString('id-ID')}</span></td>
+                <td><span class="badge badge-tag">${item.keterangan}</span></td>
+                <td class="action-btns">
+                    <button class="btn-action btn-edit" onclick="siapkanEditData('${item.id}')"><i class="fa-solid fa-pen"></i> Edit</button>
+                    <button class="btn-action btn-hapus" onclick="hapusData('${item.id}')"><i class="fa-solid fa-trash-can"></i> Hapus</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        updateDashboard();
+        if (document.getElementById('halaman-detail-bulanan').style.display === 'block') { window.renderHalamanDetailBulanan(); }
+        if (document.getElementById('halaman-detail-harian').style.display === 'block') { window.renderHalamanDetailHarian(); }
+    }
+
+    function updateDashboard() {
+        const hariIni = new Date().toISOString().split('T')[0]; 
+        const bulanIni = hariIni.substring(0, 7); 
+        const tahunIni = hariIni.substring(0, 4);
+        let totalHariIni = 0, totalBarangBulanIni = 0, totalNominalBulanIni = 0, totalNominalTahunIni = 0;
+
+        dataPenjualan.forEach(item => {
+            if (item.tanggal === hariIni) totalHariIni += item.nominal;
+            if (item.tanggal.startsWith(bulanIni)) { totalBarangBulanIni += item.jumlah; totalNominalBulanIni += item.nominal; }
+            if (item.tanggal.startsWith(tahunIni)) totalNominalTahunIni += item.nominal;
+        });
+
+        document.getElementById('totalHariIni').innerText = `Rp ${totalHariIni.toLocaleString('id-ID')}`;
+        document.getElementById('totalBarangBulanIni').innerText = `${totalBarangBulanIni} Unit`;
+        document.getElementById('totalNominalBulanIni').innerText = `Rp ${totalNominalBulanIni.toLocaleString('id-ID')}`;
+        document.getElementById('totalNominalTahunIni').innerText = `Rp ${totalNominalTahunIni.toLocaleString('id-ID')}`;
+    }
+
+    // ==== RENDER DETAIL HARIAN ====
+    window.renderHalamanDetailHarian = function() {
+        const tanggalPilih = document.getElementById('filterTanggalHarian').value;
+        const dataHariIni = dataPenjualan.filter(item => item.tanggal === tanggalPilih);
+        let totBarang = 0, totNominal = 0;
+        const tbody = document.getElementById('tabelRekapHarianTertentu');
+        tbody.innerHTML = '';
+
+        if(dataHariIni.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">Belum ada transaksi di tanggal ini.</td></tr>`;
+        } else {
+            dataHariIni.sort((a,b) => b.timestamp - a.timestamp).forEach((item, index) => {
+                totBarang += item.jumlah;
+                totNominal += item.nominal;
+                const jamInput = new Date(item.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                const hargaSatuan = item.hargaSatuan || (item.nominal / item.jumlah);
+                const tr = document.createElement('tr');
+                tr.className = `row-color-${index % 5}`;
+                tr.innerHTML = `
+                    <td>${jamInput}</td>
+                    <td style="font-weight: 600;">${item.namaBarang}</td>
+                    <td>Rp ${hargaSatuan.toLocaleString('id-ID')}</td>
+                    <td><span class="badge badge-qty">${item.jumlah} Unit</span></td>
+                    <td><span class="badge badge-price">Rp ${item.nominal.toLocaleString('id-ID')}</span></td>
+                    <td><span class="badge badge-tag">${item.keterangan}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        document.getElementById('harianTotalBarang').innerText = `${totBarang} Unit`;
+        document.getElementById('harianTotalNominal').innerText = `Rp ${totNominal.toLocaleString('id-ID')}`;
+    }
+
+    // ==== RENDER DETAIL BULANAN & TREN ====
+    function siapkanFilterTahun() {
+        const selectTahun = document.getElementById('filterTahun');
+        const tahunUnik = new Set();
+        dataPenjualan.forEach(item => tahunUnik.add(item.tanggal.substring(0, 4)));
+        tahunUnik.add(new Date().getFullYear().toString());
+        selectTahun.innerHTML = '';
+        [...tahunUnik].sort().reverse().forEach(thn => {
+            const opt = document.createElement('option'); opt.value = thn; opt.innerText = thn; selectTahun.appendChild(opt);
+        });
+    }
+
+    window.renderHalamanDetailBulanan = function() {
+        const tahun = document.getElementById('filterTahun').value;
+        const bulan = document.getElementById('filterBulan').value;
+        const isTahunan = bulan === 'all';
+        const prefixFilter = isTahunan ? tahun : `${tahun}-${bulan}`;
+        
+        document.getElementById('judulTabelRekap').innerText = isTahunan ? `Detail Tren Bulanan (${tahun})` : `Detail Rekap Harian (${bulan}-${tahun})`;
+        document.getElementById('headerPeriode').innerText = isTahunan ? "Bulan" : "Tanggal";
+
+        const dataTerfilter = dataPenjualan.filter(item => item.tanggal.startsWith(prefixFilter));
+        const rekap = {};
+        
+        dataTerfilter.forEach(item => {
+            const periodeKey = isTahunan ? item.tanggal.substring(0, 7) : item.tanggal;
+            if (!rekap[periodeKey]) rekap[periodeKey] = { jumlah: 0, nominal: 0 };
+            rekap[periodeKey].jumlah += item.jumlah;
+            rekap[periodeKey].nominal += item.nominal;
+        });
+
+        const periodeUrut = Object.keys(rekap).sort();
+        const labelsGrafik = []; const dataNominalGrafik = [];
+        const tbodyDetail = document.getElementById('tabelRekapBulanan'); tbodyDetail.innerHTML = '';
+        const namaBulanArr = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+
+        if(periodeUrut.length === 0) {
+            tbodyDetail.innerHTML = `<tr><td colspan="3" style="text-align:center; padding: 20px;">Tidak ada data pada periode ini.</td></tr>`;
+        } else {
+            [...periodeUrut].reverse().forEach((periode, index) => {
+                let labelPeriode = periode;
+                if(isTahunan) labelPeriode = `${namaBulanArr[parseInt(periode.substring(5, 7)) - 1]} ${periode.substring(0,4)}`;
+                const tr = document.createElement('tr');
+                tr.className = `row-color-${index % 5}`;
+                tr.innerHTML = `
+                    <td><strong>${labelPeriode}</strong></td>
+                    <td><span class="badge badge-qty">${rekap[periode].jumlah} Unit</span></td>
+                    <td><span class="badge badge-price">Rp ${rekap[periode].nominal.toLocaleString('id-ID')}</span></td>
+                `;
+                tbodyDetail.appendChild(tr);
+            });
+            periodeUrut.forEach(periode => {
+                labelsGrafik.push(isTahunan ? `${namaBulanArr[parseInt(periode.substring(5, 7)) - 1]} ${periode.substring(0,4)}` : periode);
+                dataNominalGrafik.push(rekap[periode].nominal);
+            });
+        }
+
+        const ctx = document.getElementById('grafikPendapatan').getContext('2d');
+        if (grafikInstance) grafikInstance.destroy();
+        
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.2)');
+        gradient.addColorStop(1, 'rgba(236, 72, 153, 0.0)');
+
+        grafikInstance = new Chart(ctx, {
+            type: 'line', 
+            data: { 
+                labels: labelsGrafik, 
+                datasets: [{ 
+                    label: `Pendapatan (Rp)`, 
+                    data: dataNominalGrafik, 
+                    backgroundColor: gradient, 
+                    borderColor: '#6366f1', 
+                    borderWidth: 2, 
+                    pointBackgroundColor: '#ffffff', 
+                    pointBorderColor: '#6366f1', 
+                    pointBorderWidth: 2, 
+                    pointRadius: 4, 
+                    fill: true, 
+                    tension: 0.4 
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                scales: { 
+                    y: { beginAtZero: true, grid: { borderDash: [5, 5] }, ticks: { callback: function(value) { return 'Rp ' + value.toLocaleString('id-ID'); } } }, 
+                    x: { grid: { display: false } } 
+                }, 
+                plugins: { legend: { display: true, position: 'top' } } 
+            }
+        });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => { document.getElementById('tanggal').valueAsDate = new Date(); });
+</script>
+
+</body>
+</html>
